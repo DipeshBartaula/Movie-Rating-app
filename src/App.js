@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import StarRating from "./StarRating";
 
 const tempMovieData = [
   {
@@ -86,6 +87,7 @@ export default function App() {
       if (!res.ok) throw new Error("Something went wrong with fetching movies");
 
       const data = await res.json();
+      // console.log(data);
       if (data.Reponse === "False") {
         throw new Error("Movie not found");
         return;
@@ -258,12 +260,74 @@ function Movie({ movie, onSelectMovie }) {
 }
 
 function MovieDetails({ selectedId, oncloseMovie }) {
+  const [movie, setMovie] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const {
+    Title: title,
+    Year: year,
+    Poster: poster,
+    Runtime: runtime,
+    imdbRating,
+    Plot: plot,
+    Released: released,
+    Actors: actors,
+    Director: director,
+    Genre: genre,
+  } = movie;
+  // console.log(poster);
+  useEffect(
+    function () {
+      async function getMovieDetails() {
+        setIsLoading(true);
+        const res = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+        );
+        const data = await res.json();
+        console.log(selectedId);
+        setMovie(data);
+        setIsLoading(false);
+        // console.log(data);
+      }
+      getMovieDetails();
+    },
+    [selectedId]
+  );
+
   return (
     <div classname="details">
-      <button classname="btn-back" onClick={oncloseMovie}>
-        &larr;
-      </button>
-      {selectedId}
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <>
+          <header>
+            <button classname="btn-back" onClick={oncloseMovie}>
+              &larr;
+            </button>
+            <img scr={poster} alt={`Poster of ${title} movie`} />
+            <div className="details-overview">
+              <h2>{title}</h2>
+              <p>
+                {released} &bull; {runtime}
+              </p>
+              <p>{genre}</p>
+              <p>
+                <span>⭐</span>
+                {imdbRating} IMDb Rating
+              </p>
+            </div>
+          </header>
+          <section>
+            <div className="rating">
+              <StarRating maxRating={10} size={24} />
+            </div>
+            <p>
+              <em>{plot}</em>
+            </p>
+            <p>Starring {actors}</p>
+            <p>Directed by {director}</p>
+          </section>
+        </>
+      )}
     </div>
   );
 }
